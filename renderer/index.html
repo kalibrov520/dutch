@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dutch Flashcards</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Desktop study deck</p>
+          <h1>Dutch Flashcards</h1>
+        </div>
+        <button id="load-deck-button" class="ghost-button">Load another TSV</button>
+      </header>
+
+      <section id="status-panel" class="status-panel">
+        <div>
+          <p class="status-label">Current deck</p>
+          <p id="deck-name" class="status-value">Loading...</p>
+        </div>
+        <div>
+          <p class="status-label">Progress</p>
+          <p id="progress-text" class="status-value">0 / 0</p>
+        </div>
+      </section>
+
+      <section id="message-panel" class="message-panel hidden"></section>
+
+      <section id="study-view" class="study-view hidden">
+        <button id="flashcard" class="flashcard" type="button">
+          <div class="card-face">
+            <p class="card-label" id="card-label">Word</p>
+            <h2 id="card-front" class="card-front"></h2>
+            <p id="card-back" class="card-back hidden"></p>
+            <p id="card-meta" class="card-meta"></p>
+          </div>
+        </button>
+
+        <div class="actions">
+          <button id="reveal-button" class="primary-button" type="button">Reveal meaning</button>
+          <button id="next-button" class="secondary-button hidden" type="button">Next card</button>
+        </div>
+      </section>
+
+      <section id="end-view" class="end-view hidden">
+        <p class="eyebrow">Session complete</p>
+        <h2>That’s all for today.</h2>
+        <p>
+          Add a new set of words when you’re ready, or restart this deck for another shuffled run.
+        </p>
+        <div class="actions">
+          <button id="restart-button" class="primary-button" type="button">Start again</button>
+          <button id="end-load-button" class="secondary-button" type="button">Load new set</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="./renderer.js"></script>
+  </body>
+</html>

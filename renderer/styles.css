@@ -1,0 +1,214 @@
+:root {
+  color-scheme: light;
+  --bg: #f3efe4;
+  --paper: #fffaf1;
+  --paper-strong: #fffdf8;
+  --ink: #1f2a2a;
+  --muted: #5f6b64;
+  --accent: #b95c34;
+  --accent-dark: #8f4424;
+  --line: rgba(31, 42, 42, 0.12);
+  --shadow: 0 24px 60px rgba(70, 49, 36, 0.18);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(185, 92, 52, 0.16), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(109, 138, 109, 0.15), transparent 28%),
+    linear-gradient(180deg, #f6f2e9 0%, #efe6d8 100%);
+}
+
+.app-shell {
+  width: min(920px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 32px 0 40px;
+}
+
+.topbar,
+.status-panel,
+.message-panel,
+.flashcard,
+.end-view {
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.topbar,
+.status-panel {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding: 22px 24px;
+}
+
+.status-panel {
+  margin-top: 18px;
+}
+
+.message-panel {
+  margin-top: 18px;
+  padding: 16px 20px;
+  color: var(--accent-dark);
+  background: #fff4e9;
+}
+
+.study-view,
+.end-view {
+  margin-top: 22px;
+}
+
+.flashcard {
+  width: 100%;
+  padding: 28px;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.flashcard:hover {
+  transform: translateY(-2px);
+}
+
+.card-face {
+  min-height: 360px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.card-label,
+.status-label,
+.eyebrow {
+  margin: 0;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+h1,
+h2,
+.card-front {
+  font-family: "Georgia", "Times New Roman", serif;
+}
+
+h1 {
+  margin: 8px 0 0;
+  font-size: clamp(2rem, 3vw, 2.8rem);
+}
+
+h2 {
+  margin: 10px 0 0;
+  font-size: clamp(1.8rem, 3.4vw, 2.7rem);
+}
+
+.card-front {
+  margin: 14px 0 12px;
+  font-size: clamp(2.5rem, 6vw, 4.8rem);
+  line-height: 1.05;
+}
+
+.card-back {
+  margin: 0;
+  font-size: clamp(1.15rem, 2.2vw, 1.6rem);
+  color: var(--accent-dark);
+  max-width: 28ch;
+}
+
+.card-meta,
+.status-value {
+  margin: 6px 0 0;
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.card-meta {
+  margin-top: 26px;
+  color: var(--muted);
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+button {
+  font: inherit;
+}
+
+.primary-button,
+.secondary-button,
+.ghost-button {
+  border-radius: 999px;
+  padding: 13px 18px;
+  border: 0;
+  cursor: pointer;
+  transition: transform 140ms ease, opacity 140ms ease, background 140ms ease;
+}
+
+.primary-button:hover,
+.secondary-button:hover,
+.ghost-button:hover {
+  transform: translateY(-1px);
+}
+
+.primary-button {
+  background: var(--accent);
+  color: #fffdf9;
+}
+
+.secondary-button {
+  background: #e7dfd0;
+  color: var(--ink);
+}
+
+.ghost-button {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+.end-view {
+  padding: 28px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    width: min(100% - 20px, 920px);
+    padding-top: 20px;
+  }
+
+  .topbar,
+  .status-panel {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .flashcard {
+    padding: 22px;
+  }
+
+  .card-face {
+    min-height: 300px;
+  }
+}

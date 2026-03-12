@@ -1,0 +1,12 @@
+{
+  "name": "dutch-desktop-flashcards",
+  "version": "1.0.0",
+  "description": "Minimal Electron flashcards app for TSV vocabulary decks.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^37.3.1"
+  }
+}
