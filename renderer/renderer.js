@@ -11,11 +11,14 @@ const state = {
   currentIndex: 0,
   revealed: false,
   selectedMode: "",
+  selectedBrowseMode: "",
 };
 
 const elements = {
   titleView: document.querySelector("#title-view"),
   studyView: document.querySelector("#study-view"),
+  browseSelectView: document.querySelector("#browse-select-view"),
+  browseDetailView: document.querySelector("#browse-detail-view"),
   messagePanel: document.querySelector("#message-panel"),
   deckName: document.querySelector("#deck-name"),
   progressText: document.querySelector("#progress-text"),
@@ -32,6 +35,14 @@ const elements = {
   modeSelectLabel: document.querySelector("#mode-select-label"),
   modeSelect: document.querySelector("#mode-select"),
   modeCards: [...document.querySelectorAll(".mode-card")],
+  browseCards: [...document.querySelectorAll(".browse-card")],
+  browseSelectTitle: document.querySelector("#browse-select-title"),
+  browseSelectList: document.querySelector("#browse-select-list"),
+  browseSelectBackHomeButton: document.querySelector("#browse-select-back-home-button"),
+  browseDetailTitle: document.querySelector("#browse-detail-title"),
+  browseDetailList: document.querySelector("#browse-detail-list"),
+  browseDetailBackButton: document.querySelector("#browse-detail-back-button"),
+  browseDetailHomeButton: document.querySelector("#browse-detail-home-button"),
 };
 
 function shuffle(cards) {
@@ -123,6 +134,8 @@ function renderTitleScreen(message = "") {
   state.revealed = false;
 
   elements.studyView.classList.add("hidden");
+  elements.browseSelectView.classList.add("hidden");
+  elements.browseDetailView.classList.add("hidden");
   elements.titleView.classList.remove("hidden");
   elements.progressText.textContent = "0 / 0";
 
@@ -148,6 +161,8 @@ function renderCurrentCard() {
 
   state.revealed = false;
   elements.titleView.classList.add("hidden");
+  elements.browseSelectView.classList.add("hidden");
+  elements.browseDetailView.classList.add("hidden");
   elements.studyView.classList.remove("hidden");
 
   elements.cardLabel.textContent = "Click the card to reveal";
@@ -180,9 +195,96 @@ function setDeck(deck) {
   state.chapters = deck.chapters;
   state.themes = deck.themes;
   state.selectedMode = "";
+  state.selectedBrowseMode = "";
 
   elements.deckName.textContent = `${state.deckName} (${state.allCards.length} words)`;
   renderTitleScreen();
+}
+
+function browseOptionsForMode(mode) {
+  if (mode === "chapter") {
+    return state.chapters.map((chapter) => ({
+      name: chapter,
+      cards: state.allCards.filter((card) => card.chapter === chapter),
+    }));
+  }
+
+  if (mode === "theme") {
+    return state.themes.map((theme) => ({
+      name: theme,
+      cards: state.allCards.filter((card) => card.group === theme),
+    }));
+  }
+
+  return [];
+}
+
+function renderBrowseSelectionView(mode) {
+  if (mode === "chapter" && !state.chapters.length) {
+    renderTitleScreen("This deck does not include chapter data yet.");
+    return;
+  }
+
+  if (mode === "theme" && !state.themes.length) {
+    renderTitleScreen("This deck does not include theme data yet.");
+    return;
+  }
+
+  state.selectedBrowseMode = mode;
+  elements.titleView.classList.add("hidden");
+  elements.studyView.classList.add("hidden");
+  elements.browseDetailView.classList.add("hidden");
+  elements.browseSelectView.classList.remove("hidden");
+  elements.progressText.textContent = "Choose category";
+  elements.browseSelectTitle.textContent = mode === "chapter" ? "Choose a hoofdstuk" : "Choose a theme";
+  hideMessage();
+
+  const groups = browseOptionsForMode(mode);
+  elements.browseSelectList.innerHTML = "";
+
+  for (const group of groups) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "browse-option-card";
+    button.addEventListener("click", () => renderBrowseDetailView(group));
+
+    const name = document.createElement("span");
+    name.className = "browse-option-title";
+    name.textContent = group.name;
+
+    const count = document.createElement("span");
+    count.className = "browse-option-count";
+    count.textContent = `${group.cards.length} words`;
+
+    button.append(name, count);
+    elements.browseSelectList.append(button);
+  }
+}
+
+function renderBrowseDetailView(group) {
+  elements.browseSelectView.classList.add("hidden");
+  elements.studyView.classList.add("hidden");
+  elements.browseDetailView.classList.remove("hidden");
+  elements.progressText.textContent = `${group.cards.length} words`;
+  elements.browseDetailTitle.textContent = group.name;
+  hideMessage();
+
+  elements.browseDetailList.innerHTML = "";
+  for (const card of group.cards) {
+    const row = document.createElement("article");
+    row.className = "browse-row";
+
+    const front = document.createElement("p");
+    front.className = "browse-front";
+    front.textContent = card.front;
+
+    const back = document.createElement("p");
+    back.className = "browse-back";
+    back.textContent = card.back;
+
+    row.append(front, back);
+    elements.browseDetailList.append(row);
+  }
 }
 
 function buildSessionCards() {
@@ -266,6 +368,12 @@ elements.startSessionButton.addEventListener("click", startSession);
 elements.modeCards.forEach((modeCard) => {
   modeCard.addEventListener("click", () => configureMode(modeCard.dataset.mode));
 });
+elements.browseCards.forEach((browseCard) => {
+  browseCard.addEventListener("click", () => renderBrowseSelectionView(browseCard.dataset.browseMode));
+});
+elements.browseSelectBackHomeButton.addEventListener("click", () => renderTitleScreen());
+elements.browseDetailBackButton.addEventListener("click", () => renderBrowseSelectionView(state.selectedBrowseMode));
+elements.browseDetailHomeButton.addEventListener("click", () => renderTitleScreen());
 
 window.addEventListener("keydown", (event) => {
   if (event.key !== " " && event.key !== "Enter") {
