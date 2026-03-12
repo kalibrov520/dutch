@@ -6,6 +6,10 @@
   "scripts": {
     "start": "electron ."
   },
+  "dependencies": {
+    "fast-xml-parser": "^5.3.0",
+    "yauzl-promise": "^4.0.0"
+  },
   "devDependencies": {
     "electron": "^37.3.1"
   }

@@ -1,6 +1,6 @@
 # Dutch Flashcards Desktop App
 
-Minimal Electron app for studying TSV-based vocabulary decks.
+Minimal Electron app for studying vocabulary from `.docx` or `.tsv` decks.
 
 ## Run
 
@@ -9,9 +9,12 @@ npm install
 npm start
 ```
 
-## TSV format
+## Supported input
 
-The app expects a tab-separated file with at least these columns:
+The app can load:
+
+- `.docx` vocabulary lists like `Woordenlijst_Dutch_English.docx`
+- `.tsv` decks with at least these columns:
 
 ```text
 Front    Back
@@ -21,6 +24,15 @@ It also understands optional `Group` and `Chapter` columns and shows them under 
 
 By default, the app opens:
 
-`output/flashcards/dutch_english_flashcards.tsv`
+`Woordenlijst_Dutch_English.docx`
 
-You can load another `.tsv` deck at any time from the app window.
+## Study modes
+
+After loading a file, the title screen lets you start a session:
+
+- By Hoofdstuk
+- By Theme
+- Random Selection of 30 Words
+- All words in random order
+
+When a session ends, the app returns to the title screen so you can choose a new approach right away.
