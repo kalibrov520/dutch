@@ -1,13 +1,10 @@
 const { app, BrowserWindow, dialog, ipcMain } = require("electron");
 const fs = require("node:fs/promises");
 const path = require("node:path");
+const { XMLParser } = require("fast-xml-parser");
+const yauzl = require("yauzl-promise");
 
-const DEFAULT_DECK_PATH = path.join(
-  __dirname,
-  "output",
-  "flashcards",
-  "dutch_english_flashcards.tsv"
-);
+const DEFAULT_DECK_PATH = path.join(__dirname, "Woordenlijst_Dutch_English.docx");
 
 function parseTsv(content) {
   const lines = content
@@ -41,26 +38,348 @@ function parseTsv(content) {
   });
 }
 
-function shuffle(cards) {
-  const shuffled = [...cards];
-  for (let i = shuffled.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+function asArray(value) {
+  if (Array.isArray(value)) {
+    return value;
   }
-  return shuffled;
+
+  if (value === undefined || value === null) {
+    return [];
+  }
+
+  return [value];
+}
+
+function extractText(node) {
+  if (!node) {
+    return "";
+  }
+
+  if (typeof node === "string") {
+    return node;
+  }
+
+  if (Array.isArray(node)) {
+    return node.map(extractText).join(" ").trim();
+  }
+
+  const textParts = [];
+  for (const [key, value] of Object.entries(node)) {
+    if (key === "#text") {
+      textParts.push(value);
+      continue;
+    }
+
+    if (key.startsWith("@_")) {
+      continue;
+    }
+
+    textParts.push(extractText(value));
+  }
+
+  return textParts.join(" ").replace(/\s+/g, " ").trim();
+}
+
+async function readZipEntry(zipPath, entryName) {
+  const zip = await yauzl.open(zipPath);
+  try {
+    let entry = null;
+    for await (const candidate of zip) {
+      if (candidate.filename === entryName) {
+        entry = candidate;
+        break;
+      }
+    }
+
+    if (!entry) {
+      throw new Error(`Could not find ${entryName} in the selected DOCX file.`);
+    }
+
+    const stream = await entry.openReadStream();
+    const chunks = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks).toString("utf8");
+  } finally {
+    await zip.close();
+  }
+}
+
+function looksLikeIdiom(text) {
+  const normalized = text.toLowerCase();
+  if (normalized.endsWith(", de") || normalized.endsWith(", het")) {
+    return false;
+  }
+
+  const idiomMarkers = [
+    " – ",
+    "(",
+    ")",
+    "geen ",
+    "het komt",
+    "er is",
+    "dan wordt",
+    "van – tot",
+    "uit de –",
+    "met alle",
+    "onder – of banken",
+    "voor het –",
+  ];
+
+  return text.includes(",") || idiomMarkers.some((marker) => normalized.includes(marker));
+}
+
+function chooseGroup(dutch, english) {
+  const englishLower = english.toLowerCase();
+
+  const connectorWords = [
+    "since",
+    "because",
+    "therefore",
+    "after that",
+    "provided",
+    "unless",
+    "although",
+    "meanwhile",
+    "so that",
+    "as long as",
+    "by the way",
+    "moreover",
+    "for the sake of",
+    "thanks to",
+    "hence",
+    "at all times",
+    "as one goes",
+    "if / in case",
+    "especially",
+    "in particular",
+  ];
+  if (connectorWords.some((word) => englishLower.includes(word))) {
+    return "Connectors and framing";
+  }
+
+  if (looksLikeIdiom(dutch)) {
+    return "Idioms and fixed expressions";
+  }
+
+  const mindWords = [
+    "mind",
+    "spirit",
+    "emotion",
+    "feeling",
+    "sensitive",
+    "tense",
+    "surprise",
+    "annoy",
+    "confus",
+    "hope",
+    "conviction",
+    "belief",
+    "worry",
+    "concern",
+    "moved",
+    "speechless",
+    "hesitat",
+    "addicted",
+    "reason",
+    "sense",
+  ];
+  if (mindWords.some((word) => englishLower.includes(word))) {
+    return "Mind, emotion, and reaction";
+  }
+
+  const communicationWords = [
+    "claim",
+    "assert",
+    "suggest",
+    "expression",
+    "utterance",
+    "reply",
+    "counterargument",
+    "convince",
+    "persuade",
+    "interpret",
+    "view",
+    "opinion",
+    "discuss",
+    "talk",
+    "mention",
+    "appeal",
+    "call upon",
+    "tone",
+    "jargon",
+    "say",
+    "scrutinize",
+    "emphasize",
+  ];
+  if (communicationWords.some((word) => englishLower.includes(word))) {
+    return "Communication and ideas";
+  }
+
+  const societyWords = [
+    "market",
+    "manager",
+    "leadership",
+    "majority",
+    "countryside",
+    "purchase",
+    "acquisition",
+    "maintenance",
+    "support",
+    "requirement",
+    "demand",
+    "priority",
+    "resistance",
+    "achievement",
+    "performance",
+    "appointment",
+    "guide",
+    "preschooler",
+    "group",
+    "circle",
+    "work",
+    "effort",
+    "commitment",
+    "approach",
+    "setup",
+  ];
+  if (societyWords.some((word) => englishLower.includes(word))) {
+    return "Society, work, and structure";
+  }
+
+  const actionWords = [
+    "to ",
+    "reduce",
+    "increase",
+    "invent",
+    "observe",
+    "perceive",
+    "create",
+    "deviate",
+    "control",
+    "throw",
+    "pile",
+    "roll up",
+    "handle",
+    "promote",
+    "furnish",
+    "set up",
+    "maintain",
+    "devote",
+    "conquer",
+    "weaken",
+    "demonstrate",
+    "complete",
+    "expose",
+    "take over",
+    "consider",
+    "remove",
+    "continue",
+    "devour",
+    "perform",
+  ];
+  if (actionWords.some((word) => englishLower.includes(word))) {
+    return "Actions and change";
+  }
+
+  return "Things, qualities, and descriptions";
+}
+
+async function parseDocx(docxPath) {
+  const xml = await readZipEntry(docxPath, "word/document.xml");
+  const parser = new XMLParser({
+    ignoreAttributes: false,
+    preserveOrder: false,
+    trimValues: true,
+  });
+  const document = parser.parse(xml);
+  const body = document?.["w:document"]?.["w:body"];
+  const table = asArray(body?.["w:tbl"])[0];
+  const rows = asArray(table?.["w:tr"]);
+
+  if (!rows.length) {
+    throw new Error("No vocabulary table found in the selected DOCX file.");
+  }
+
+  const cards = [];
+  let chapter = "";
+
+  for (const row of rows) {
+    const cells = asArray(row?.["w:tc"]).map((cell) => extractText(cell).trim()).filter(Boolean);
+
+    if (cells.length === 1 && cells[0].startsWith("Hoofdstuk ")) {
+      chapter = cells[0];
+      continue;
+    }
+
+    if (cells.length < 2) {
+      continue;
+    }
+
+    const [left, right] = cells;
+    if (!left || !right) {
+      continue;
+    }
+    if (left === "Nederlands" && right === "English") {
+      continue;
+    }
+    if (left.startsWith("Hoofdstuk ")) {
+      chapter = left;
+      continue;
+    }
+
+    cards.push({
+      id: `${cards.length + 1}`,
+      front: left,
+      back: right,
+      chapter: chapter || "",
+      group: chooseGroup(left, right),
+    });
+  }
+
+  return cards;
+}
+
+function normalizeCards(cards) {
+  const filtered = cards.filter((card) => card.front && card.back);
+  if (!filtered.length) {
+    throw new Error("No cards found in the selected deck.");
+  }
+
+  return filtered.map((card, index) => ({
+    id: card.id || `${index + 1}`,
+    front: card.front,
+    back: card.back,
+    chapter: card.chapter || "",
+    group: card.group || "",
+  }));
 }
 
 async function loadDeckFromPath(deckPath) {
-  const content = await fs.readFile(deckPath, "utf-8");
-  const cards = parseTsv(content).filter((card) => card.front && card.back);
-  if (!cards.length) {
-    throw new Error("No cards found in the selected deck.");
+  const extension = path.extname(deckPath).toLowerCase();
+  let cards;
+
+  if (extension === ".tsv") {
+    const content = await fs.readFile(deckPath, "utf-8");
+    cards = parseTsv(content);
+  } else if (extension === ".docx") {
+    cards = await parseDocx(deckPath);
+  } else {
+    throw new Error("Please choose a .tsv or .docx file.");
   }
+
+  const normalizedCards = normalizeCards(cards);
+  const chapters = [...new Set(normalizedCards.map((card) => card.chapter).filter(Boolean))];
+  const themes = [...new Set(normalizedCards.map((card) => card.group).filter(Boolean))];
 
   return {
     deckPath,
     deckName: path.basename(deckPath),
-    cards: shuffle(cards),
+    fileType: extension.replace(".", ""),
+    cards: normalizedCards,
+    chapters,
+    themes,
   };
 }
 
@@ -95,8 +414,12 @@ ipcMain.handle("deck:load-default", async () => loadDeckFromPath(DEFAULT_DECK_PA
 
 ipcMain.handle("deck:load-from-dialog", async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog({
-    title: "Choose a TSV deck",
-    filters: [{ name: "TSV files", extensions: ["tsv"] }],
+    title: "Choose a vocabulary file",
+    filters: [
+      { name: "Vocabulary files", extensions: ["docx", "tsv"] },
+      { name: "DOCX files", extensions: ["docx"] },
+      { name: "TSV files", extensions: ["tsv"] },
+    ],
     properties: ["openFile"],
   });
 
@@ -107,8 +430,6 @@ ipcMain.handle("deck:load-from-dialog", async () => {
   const deck = await loadDeckFromPath(filePaths[0]);
   return { canceled: false, ...deck };
 });
-
-ipcMain.handle("deck:restart", async (_event, deckPath) => loadDeckFromPath(deckPath || DEFAULT_DECK_PATH));
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {

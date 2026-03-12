@@ -13,7 +13,7 @@
           <p class="eyebrow">Desktop study deck</p>
           <h1>Dutch Flashcards</h1>
         </div>
-        <button id="load-deck-button" class="ghost-button">Load another TSV</button>
+        <button id="load-deck-button" class="ghost-button">Load words file</button>
       </header>
 
       <section id="status-panel" class="status-panel">
@@ -29,6 +29,42 @@
 
       <section id="message-panel" class="message-panel hidden"></section>
 
+      <section id="title-view" class="home-view hidden">
+        <p class="eyebrow">Choose your session</p>
+        <h2>How do you want to study this deck?</h2>
+        <p class="home-copy">
+          Load a `.docx` vocabulary list or a `.tsv` flashcard deck, then choose how to run today’s session.
+        </p>
+
+        <div class="home-grid">
+          <button class="mode-card" type="button" data-mode="chapter">
+            <span class="mode-title">By Hoofdstuk</span>
+            <span class="mode-copy">Study one chapter at a time.</span>
+          </button>
+          <button class="mode-card" type="button" data-mode="theme">
+            <span class="mode-title">By Theme</span>
+            <span class="mode-copy">Use grouped themes from the loaded deck.</span>
+          </button>
+          <button class="mode-card" type="button" data-mode="random30">
+            <span class="mode-title">Random Selection of 30 Words</span>
+            <span class="mode-copy">A short shuffled session.</span>
+          </button>
+          <button class="mode-card" type="button" data-mode="all-random">
+            <span class="mode-title">All words in random order</span>
+            <span class="mode-copy">Go through the full deck shuffled.</span>
+          </button>
+        </div>
+
+        <div id="selector-panel" class="selector-panel hidden">
+          <label class="selector-label" for="mode-select" id="mode-select-label">Choose one</label>
+          <select id="mode-select" class="selector-input"></select>
+        </div>
+
+        <div class="actions home-actions">
+          <button id="start-session-button" class="primary-button" type="button">Start session</button>
+        </div>
+      </section>
+
       <section id="study-view" class="study-view hidden">
         <button id="flashcard" class="flashcard" type="button">
           <div class="card-face">
@@ -42,18 +78,6 @@
         <div class="actions">
           <button id="reveal-button" class="primary-button" type="button">Reveal meaning</button>
           <button id="next-button" class="secondary-button hidden" type="button">Next card</button>
-        </div>
-      </section>
-
-      <section id="end-view" class="end-view hidden">
-        <p class="eyebrow">Session complete</p>
-        <h2>That’s all for today.</h2>
-        <p>
-          Add a new set of words when you’re ready, or restart this deck for another shuffled run.
-        </p>
-        <div class="actions">
-          <button id="restart-button" class="primary-button" type="button">Start again</button>
-          <button id="end-load-button" class="secondary-button" type="button">Load new set</button>
         </div>
       </section>
     </main>

@@ -1,14 +1,21 @@
+const RANDOM_SESSION_SIZE = 30;
+
 const state = {
   deckPath: "",
   deckName: "",
-  cards: [],
+  fileType: "",
+  allCards: [],
+  chapters: [],
+  themes: [],
+  sessionCards: [],
   currentIndex: 0,
   revealed: false,
+  selectedMode: "",
 };
 
 const elements = {
+  titleView: document.querySelector("#title-view"),
   studyView: document.querySelector("#study-view"),
-  endView: document.querySelector("#end-view"),
   messagePanel: document.querySelector("#message-panel"),
   deckName: document.querySelector("#deck-name"),
   progressText: document.querySelector("#progress-text"),
@@ -20,9 +27,21 @@ const elements = {
   revealButton: document.querySelector("#reveal-button"),
   nextButton: document.querySelector("#next-button"),
   loadDeckButton: document.querySelector("#load-deck-button"),
-  restartButton: document.querySelector("#restart-button"),
-  endLoadButton: document.querySelector("#end-load-button"),
+  startSessionButton: document.querySelector("#start-session-button"),
+  selectorPanel: document.querySelector("#selector-panel"),
+  modeSelectLabel: document.querySelector("#mode-select-label"),
+  modeSelect: document.querySelector("#mode-select"),
+  modeCards: [...document.querySelectorAll(".mode-card")],
 };
+
+function shuffle(cards) {
+  const shuffled = [...cards];
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
 
 function showMessage(message) {
   elements.messagePanel.textContent = message;
@@ -35,25 +54,101 @@ function hideMessage() {
 }
 
 function currentCard() {
-  return state.cards[state.currentIndex];
+  return state.sessionCards[state.currentIndex];
 }
 
 function updateProgress() {
-  const total = state.cards.length;
+  const total = state.sessionCards.length;
   const current = total === 0 ? 0 : Math.min(state.currentIndex + 1, total);
   elements.progressText.textContent = `${current} / ${total}`;
+}
+
+function updateModeSelectionUI() {
+  for (const card of elements.modeCards) {
+    card.classList.toggle("selected", card.dataset.mode === state.selectedMode);
+  }
+}
+
+function showSelector(label, options) {
+  elements.selectorPanel.classList.remove("hidden");
+  elements.modeSelectLabel.textContent = label;
+  elements.modeSelect.innerHTML = "";
+
+  for (const option of options) {
+    const optionElement = document.createElement("option");
+    optionElement.value = option;
+    optionElement.textContent = option;
+    elements.modeSelect.append(optionElement);
+  }
+}
+
+function hideSelector() {
+  elements.selectorPanel.classList.add("hidden");
+  elements.modeSelect.innerHTML = "";
+}
+
+function configureMode(mode) {
+  state.selectedMode = mode;
+  updateModeSelectionUI();
+
+  if (mode === "chapter") {
+    if (!state.chapters.length) {
+      showMessage("This deck does not include chapter data yet. Try a DOCX file or a TSV with a Chapter column.");
+      hideSelector();
+      return;
+    }
+    hideMessage();
+    showSelector("Choose hoofdstuk", state.chapters);
+    return;
+  }
+
+  if (mode === "theme") {
+    if (!state.themes.length) {
+      showMessage("This deck does not include theme data yet. Try a DOCX file or a TSV with a Group column.");
+      hideSelector();
+      return;
+    }
+    hideMessage();
+    showSelector("Choose theme", state.themes);
+    return;
+  }
+
+  hideMessage();
+  hideSelector();
+}
+
+function renderTitleScreen(message = "") {
+  state.sessionCards = [];
+  state.currentIndex = 0;
+  state.revealed = false;
+
+  elements.studyView.classList.add("hidden");
+  elements.titleView.classList.remove("hidden");
+  elements.progressText.textContent = "0 / 0";
+
+  if (message) {
+    showMessage(message);
+  } else {
+    hideMessage();
+  }
+
+  if (!state.selectedMode) {
+    configureMode("all-random");
+  } else {
+    configureMode(state.selectedMode);
+  }
 }
 
 function renderCurrentCard() {
   const card = currentCard();
   if (!card) {
-    renderEndScreen();
+    renderTitleScreen("That’s all for today. Pick an approach to start again.");
     return;
   }
 
   state.revealed = false;
+  elements.titleView.classList.add("hidden");
   elements.studyView.classList.remove("hidden");
-  elements.endView.classList.add("hidden");
 
   elements.cardLabel.textContent = "Click the card to reveal";
   elements.cardFront.textContent = card.front;
@@ -77,20 +172,57 @@ function revealCurrentCard() {
   elements.nextButton.classList.remove("hidden");
 }
 
-function renderEndScreen() {
-  elements.studyView.classList.add("hidden");
-  elements.endView.classList.remove("hidden");
-  elements.progressText.textContent = `${state.cards.length} / ${state.cards.length}`;
-}
-
 function setDeck(deck) {
   state.deckPath = deck.deckPath;
   state.deckName = deck.deckName;
-  state.cards = deck.cards;
+  state.fileType = deck.fileType;
+  state.allCards = deck.cards;
+  state.chapters = deck.chapters;
+  state.themes = deck.themes;
+  state.selectedMode = "";
+
+  elements.deckName.textContent = `${state.deckName} (${state.allCards.length} words)`;
+  renderTitleScreen();
+}
+
+function buildSessionCards() {
+  if (state.selectedMode === "chapter") {
+    const chapter = elements.modeSelect.value;
+    return shuffle(state.allCards.filter((card) => card.chapter === chapter));
+  }
+
+  if (state.selectedMode === "theme") {
+    const theme = elements.modeSelect.value;
+    return shuffle(state.allCards.filter((card) => card.group === theme));
+  }
+
+  if (state.selectedMode === "random30") {
+    return shuffle(state.allCards).slice(0, Math.min(RANDOM_SESSION_SIZE, state.allCards.length));
+  }
+
+  return shuffle(state.allCards);
+}
+
+function startSession() {
+  if (!state.allCards.length) {
+    showMessage("Load a vocabulary file first.");
+    return;
+  }
+
+  if ((state.selectedMode === "chapter" || state.selectedMode === "theme") && !elements.modeSelect.value) {
+    showMessage("Choose a specific option before starting the session.");
+    return;
+  }
+
+  const sessionCards = buildSessionCards();
+  if (!sessionCards.length) {
+    showMessage("No cards were found for that selection.");
+    return;
+  }
+
+  state.sessionCards = sessionCards;
   state.currentIndex = 0;
   state.revealed = false;
-
-  elements.deckName.textContent = state.deckName;
   hideMessage();
   renderCurrentCard();
 }
@@ -126,36 +258,29 @@ async function loadDeckFromDialog() {
   }
 }
 
-async function restartDeck() {
-  try {
-    const deck = await window.flashcards.restartDeck(state.deckPath);
-    setDeck(deck);
-  } catch (error) {
-    showMessage(error.message || "Could not restart the deck.");
-  }
-}
-
 elements.flashcard.addEventListener("click", revealCurrentCard);
 elements.revealButton.addEventListener("click", revealCurrentCard);
 elements.nextButton.addEventListener("click", nextCard);
 elements.loadDeckButton.addEventListener("click", loadDeckFromDialog);
-elements.restartButton.addEventListener("click", restartDeck);
-elements.endLoadButton.addEventListener("click", loadDeckFromDialog);
+elements.startSessionButton.addEventListener("click", startSession);
+elements.modeCards.forEach((modeCard) => {
+  modeCard.addEventListener("click", () => configureMode(modeCard.dataset.mode));
+});
 
 window.addEventListener("keydown", (event) => {
-  if (event.key === " " || event.key === "Enter") {
-    event.preventDefault();
-    if (!state.cards.length) {
-      return;
-    }
-    if (state.currentIndex >= state.cards.length) {
-      return;
-    }
-    if (state.revealed) {
-      nextCard();
-    } else {
-      revealCurrentCard();
-    }
+  if (event.key !== " " && event.key !== "Enter") {
+    return;
+  }
+
+  if (!state.sessionCards.length || elements.studyView.classList.contains("hidden")) {
+    return;
+  }
+
+  event.preventDefault();
+  if (state.revealed) {
+    nextCard();
+  } else {
+    revealCurrentCard();
   }
 });
 
