@@ -63,6 +63,25 @@
         <div class="actions home-actions">
           <button id="start-session-button" class="primary-button" type="button">Start session</button>
         </div>
+
+        <div class="home-divider"></div>
+
+        <p class="eyebrow">Browse the full deck</p>
+        <h2>See all words by category</h2>
+        <p class="home-copy">
+          Open the full list grouped by chapter or theme when you want to review vocabulary without flashcards.
+        </p>
+
+        <div class="home-grid browse-grid">
+          <button class="mode-card browse-card" type="button" data-browse-mode="chapter">
+            <span class="mode-title">By Hoofdstuk</span>
+            <span class="mode-copy">See every word pair grouped into chapters.</span>
+          </button>
+          <button class="mode-card browse-card" type="button" data-browse-mode="theme">
+            <span class="mode-title">By Theme</span>
+            <span class="mode-copy">See every word pair grouped into themes.</span>
+          </button>
+        </div>
       </section>
 
       <section id="study-view" class="study-view hidden">
@@ -79,6 +98,31 @@
           <button id="reveal-button" class="primary-button" type="button">Reveal meaning</button>
           <button id="next-button" class="secondary-button hidden" type="button">Next card</button>
         </div>
+      </section>
+
+      <section id="browse-select-view" class="browse-view hidden">
+        <div class="browse-header">
+          <div>
+            <p class="eyebrow">Browse words</p>
+            <h2 id="browse-select-title">Choose a category</h2>
+          </div>
+          <button id="browse-select-back-home-button" class="ghost-button" type="button">Back to home</button>
+        </div>
+        <div id="browse-select-list" class="browse-select-list"></div>
+      </section>
+
+      <section id="browse-detail-view" class="browse-view hidden">
+        <div class="browse-header">
+          <div>
+            <p class="eyebrow">Browse words</p>
+            <h2 id="browse-detail-title">All words</h2>
+          </div>
+          <div class="browse-header-actions">
+            <button id="browse-detail-back-button" class="secondary-button" type="button">Back</button>
+            <button id="browse-detail-home-button" class="ghost-button" type="button">Back to home</button>
+          </div>
+        </div>
+        <div id="browse-detail-list" class="browse-detail-list"></div>
       </section>
     </main>
 

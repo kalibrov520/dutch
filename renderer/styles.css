@@ -77,6 +77,12 @@ body {
   color: var(--muted);
 }
 
+.home-divider {
+  height: 1px;
+  margin: 28px 0;
+  background: var(--line);
+}
+
 .home-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -140,6 +146,10 @@ body {
 
 .home-actions {
   margin-top: 20px;
+}
+
+.browse-grid {
+  margin-bottom: 6px;
 }
 
 .flashcard {
@@ -254,6 +264,86 @@ button {
   border: 1px solid var(--line);
 }
 
+.browse-view {
+  margin-top: 22px;
+}
+
+.browse-header,
+.browse-group {
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.browse-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding: 22px 24px;
+}
+
+.browse-header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.browse-select-list,
+.browse-detail-list {
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.browse-option-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 20px 22px;
+  border-radius: 24px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  text-align: left;
+  cursor: pointer;
+}
+
+.browse-option-title {
+  font-size: 1.12rem;
+  font-weight: 700;
+}
+
+.browse-option-count {
+  color: var(--muted);
+}
+
+.browse-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: #fffef9;
+  border: 1px solid rgba(31, 42, 42, 0.08);
+}
+
+.browse-front,
+.browse-back {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.browse-front {
+  font-weight: 700;
+}
+
+.browse-back {
+  color: var(--accent-dark);
+}
+
 .hidden {
   display: none !important;
 }
@@ -265,9 +355,15 @@ button {
   }
 
   .topbar,
-  .status-panel {
+  .status-panel,
+  .browse-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .browse-header-actions,
+  .browse-option-card {
+    width: 100%;
   }
 
   .home-grid {
@@ -276,6 +372,15 @@ button {
 
   .actions {
     flex-direction: column;
+  }
+
+  .browse-row {
+    grid-template-columns: 1fr;
+  }
+
+  .browse-option-card {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .flashcard {
