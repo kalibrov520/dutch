@@ -335,7 +335,9 @@ button {
 
 .irregular-table-wrap {
   margin-top: 18px;
+  max-height: 68vh;
   overflow-x: auto;
+  overflow-y: auto;
   border: 1px solid var(--line);
   border-radius: 28px;
   background: var(--paper);
@@ -357,6 +359,9 @@ button {
 }
 
 .irregular-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   font-size: 0.82rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -378,6 +383,16 @@ button {
 
 .irregular-english {
   color: var(--accent-dark);
+}
+
+.irregular-empty {
+  padding: 28px 18px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.filter-bar {
+  margin-top: 18px;
 }
 
 .pagination-bar {

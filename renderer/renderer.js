@@ -17,6 +17,7 @@ const state = {
   irregularDeckName: "",
   irregularCards: [],
   irregularLearnPage: 0,
+  irregularFilter: "",
   irregularQuizCards: [],
   irregularQuizIndex: 0,
   irregularAdvanceTimeout: null,
@@ -57,6 +58,7 @@ const elements = {
   irregularCheckButton: document.querySelector("#irregular-check-button"),
   irregularLearnBackButton: document.querySelector("#irregular-learn-back-button"),
   irregularLearnList: document.querySelector("#irregular-learn-list"),
+  irregularFilterInput: document.querySelector("#irregular-filter-input"),
   irregularPrevPageButton: document.querySelector("#irregular-prev-page-button"),
   irregularNextPageButton: document.querySelector("#irregular-next-page-button"),
   irregularPageInfo: document.querySelector("#irregular-page-info"),
@@ -247,6 +249,7 @@ function setIrregularDeck(deck) {
   state.irregularDeckName = deck.deckName;
   state.irregularCards = deck.cards.filter((card) => card.deckType === "irregular-verbs");
   state.irregularLearnPage = 0;
+  state.irregularFilter = "";
 }
 
 function browseOptionsForMode(mode) {
@@ -387,7 +390,20 @@ function nextCard() {
 }
 
 function irregularLearnPageCount() {
-  return Math.max(1, Math.ceil(state.irregularCards.length / IRREGULAR_LEARN_PAGE_SIZE));
+  return Math.max(1, Math.ceil(filteredIrregularCards().length / IRREGULAR_LEARN_PAGE_SIZE));
+}
+
+function filteredIrregularCards() {
+  const query = state.irregularFilter.trim().toLowerCase();
+  if (!query) {
+    return state.irregularCards;
+  }
+
+  return state.irregularCards.filter((card) =>
+    [card.infinitief, card.imperfectum, card.perfectum, card.english]
+      .filter(Boolean)
+      .some((value) => value.toLowerCase().includes(query))
+  );
 }
 
 function renderIrregularLearnView() {
@@ -399,15 +415,17 @@ function renderIrregularLearnView() {
   clearIrregularAdvanceTimeout();
   hideAllViews();
   elements.irregularLearnView.classList.remove("hidden");
-  elements.progressText.textContent = `${state.irregularCards.length} verbs`;
+  elements.irregularFilterInput.value = state.irregularFilter;
   hideMessage();
 
+  const filteredCards = filteredIrregularCards();
+  elements.progressText.textContent = `${filteredCards.length} verbs`;
   elements.irregularLearnList.innerHTML = "";
   const totalPages = irregularLearnPageCount();
   state.irregularLearnPage = Math.min(state.irregularLearnPage, totalPages - 1);
 
   const start = state.irregularLearnPage * IRREGULAR_LEARN_PAGE_SIZE;
-  const pageCards = state.irregularCards.slice(start, start + IRREGULAR_LEARN_PAGE_SIZE);
+  const pageCards = filteredCards.slice(start, start + IRREGULAR_LEARN_PAGE_SIZE);
 
   for (const card of pageCards) {
     const row = document.createElement("tr");
@@ -432,6 +450,16 @@ function renderIrregularLearnView() {
     elements.irregularLearnList.append(row);
   }
 
+  if (!filteredCards.length) {
+    const row = document.createElement("tr");
+    const emptyCell = document.createElement("td");
+    emptyCell.colSpan = 4;
+    emptyCell.className = "irregular-empty";
+    emptyCell.textContent = "No verbs match the current filter.";
+    row.append(emptyCell);
+    elements.irregularLearnList.append(row);
+  }
+
   elements.irregularPageInfo.textContent = `Page ${state.irregularLearnPage + 1} of ${totalPages}`;
   elements.irregularPrevPageButton.disabled = state.irregularLearnPage === 0;
   elements.irregularNextPageButton.disabled = state.irregularLearnPage >= totalPages - 1;
@@ -450,6 +478,12 @@ function goToNextIrregularPage() {
     return;
   }
   state.irregularLearnPage += 1;
+  renderIrregularLearnView();
+}
+
+function updateIrregularFilter(value) {
+  state.irregularFilter = value;
+  state.irregularLearnPage = 0;
   renderIrregularLearnView();
 }
 
@@ -636,6 +670,7 @@ elements.browseDetailHomeButton.addEventListener("click", () => renderTitleScree
 elements.irregularLearnButton.addEventListener("click", renderIrregularLearnView);
 elements.irregularCheckButton.addEventListener("click", startIrregularCheck);
 elements.irregularLearnBackButton.addEventListener("click", () => renderTitleScreen());
+elements.irregularFilterInput.addEventListener("input", (event) => updateIrregularFilter(event.target.value));
 elements.irregularPrevPageButton.addEventListener("click", goToPreviousIrregularPage);
 elements.irregularNextPageButton.addEventListener("click", goToNextIrregularPage);
 elements.irregularCheckBackButton.addEventListener("click", () => renderTitleScreen());
