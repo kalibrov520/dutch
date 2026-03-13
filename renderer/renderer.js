@@ -1,5 +1,6 @@
 const RANDOM_SESSION_SIZE = 30;
 const IRREGULAR_CHECK_SIZE = 30;
+const IRREGULAR_LEARN_PAGE_SIZE = 30;
 
 const state = {
   deckPath: "",
@@ -15,6 +16,7 @@ const state = {
   selectedBrowseMode: "",
   irregularDeckName: "",
   irregularCards: [],
+  irregularLearnPage: 0,
   irregularQuizCards: [],
   irregularQuizIndex: 0,
   irregularAdvanceTimeout: null,
@@ -55,6 +57,9 @@ const elements = {
   irregularCheckButton: document.querySelector("#irregular-check-button"),
   irregularLearnBackButton: document.querySelector("#irregular-learn-back-button"),
   irregularLearnList: document.querySelector("#irregular-learn-list"),
+  irregularPrevPageButton: document.querySelector("#irregular-prev-page-button"),
+  irregularNextPageButton: document.querySelector("#irregular-next-page-button"),
+  irregularPageInfo: document.querySelector("#irregular-page-info"),
   irregularCheckBackButton: document.querySelector("#irregular-check-back-button"),
   irregularPrompt: document.querySelector("#irregular-check-prompt"),
   irregularCheckProgress: document.querySelector("#irregular-check-progress"),
@@ -241,6 +246,7 @@ function setDeck(deck) {
 function setIrregularDeck(deck) {
   state.irregularDeckName = deck.deckName;
   state.irregularCards = deck.cards.filter((card) => card.deckType === "irregular-verbs");
+  state.irregularLearnPage = 0;
 }
 
 function browseOptionsForMode(mode) {
@@ -380,6 +386,10 @@ function nextCard() {
   renderCurrentCard();
 }
 
+function irregularLearnPageCount() {
+  return Math.max(1, Math.ceil(state.irregularCards.length / IRREGULAR_LEARN_PAGE_SIZE));
+}
+
 function renderIrregularLearnView() {
   if (!state.irregularCards.length) {
     renderTitleScreen("Irregular verbs are not available yet.");
@@ -393,29 +403,54 @@ function renderIrregularLearnView() {
   hideMessage();
 
   elements.irregularLearnList.innerHTML = "";
-  for (const card of state.irregularCards) {
-    const row = document.createElement("article");
-    row.className = "irregular-learn-row";
+  const totalPages = irregularLearnPageCount();
+  state.irregularLearnPage = Math.min(state.irregularLearnPage, totalPages - 1);
 
-    const infinitief = document.createElement("p");
-    infinitief.className = "browse-front";
+  const start = state.irregularLearnPage * IRREGULAR_LEARN_PAGE_SIZE;
+  const pageCards = state.irregularCards.slice(start, start + IRREGULAR_LEARN_PAGE_SIZE);
+
+  for (const card of pageCards) {
+    const row = document.createElement("tr");
+
+    const infinitief = document.createElement("td");
+    infinitief.className = "irregular-cell irregular-infinitief";
     infinitief.textContent = card.infinitief;
 
-    const imperfectum = document.createElement("p");
-    imperfectum.className = "irregular-learn-field";
-    imperfectum.textContent = `Imperfectum: ${card.imperfectum}`;
+    const imperfectum = document.createElement("td");
+    imperfectum.className = "irregular-cell";
+    imperfectum.textContent = card.imperfectum;
 
-    const perfectum = document.createElement("p");
-    perfectum.className = "irregular-learn-field";
-    perfectum.textContent = `Perfectum: ${card.perfectum}`;
+    const perfectum = document.createElement("td");
+    perfectum.className = "irregular-cell";
+    perfectum.textContent = card.perfectum;
 
-    const english = document.createElement("p");
-    english.className = "irregular-learn-field irregular-learn-english";
-    english.textContent = `English: ${card.english}`;
+    const english = document.createElement("td");
+    english.className = "irregular-cell irregular-english";
+    english.textContent = card.english;
 
     row.append(infinitief, imperfectum, perfectum, english);
     elements.irregularLearnList.append(row);
   }
+
+  elements.irregularPageInfo.textContent = `Page ${state.irregularLearnPage + 1} of ${totalPages}`;
+  elements.irregularPrevPageButton.disabled = state.irregularLearnPage === 0;
+  elements.irregularNextPageButton.disabled = state.irregularLearnPage >= totalPages - 1;
+}
+
+function goToPreviousIrregularPage() {
+  if (state.irregularLearnPage === 0) {
+    return;
+  }
+  state.irregularLearnPage -= 1;
+  renderIrregularLearnView();
+}
+
+function goToNextIrregularPage() {
+  if (state.irregularLearnPage >= irregularLearnPageCount() - 1) {
+    return;
+  }
+  state.irregularLearnPage += 1;
+  renderIrregularLearnView();
 }
 
 function normalizeBase(text) {
@@ -601,6 +636,8 @@ elements.browseDetailHomeButton.addEventListener("click", () => renderTitleScree
 elements.irregularLearnButton.addEventListener("click", renderIrregularLearnView);
 elements.irregularCheckButton.addEventListener("click", startIrregularCheck);
 elements.irregularLearnBackButton.addEventListener("click", () => renderTitleScreen());
+elements.irregularPrevPageButton.addEventListener("click", goToPreviousIrregularPage);
+elements.irregularNextPageButton.addEventListener("click", goToNextIrregularPage);
 elements.irregularCheckBackButton.addEventListener("click", () => renderTitleScreen());
 elements.irregularCheckSubmitButton.addEventListener("click", submitIrregularCheck);
 
