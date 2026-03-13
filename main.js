@@ -5,6 +5,12 @@ const { XMLParser } = require("fast-xml-parser");
 const yauzl = require("yauzl-promise");
 
 const DEFAULT_DECK_PATH = path.join(__dirname, "Woordenlijst_Dutch_English.docx");
+const DEFAULT_IRREGULAR_DECK_PATH = path.join(
+  __dirname,
+  "output",
+  "flashcards",
+  "onregelmatige_werkwoorden.tsv"
+);
 
 function parseTsv(content) {
   const lines = content
@@ -21,6 +27,11 @@ function parseTsv(content) {
   const backIndex = headers.indexOf("Back");
   const groupIndex = headers.indexOf("Group");
   const chapterIndex = headers.indexOf("Chapter");
+  const deckTypeIndex = headers.indexOf("DeckType");
+  const infinitiefIndex = headers.indexOf("Infinitief");
+  const imperfectumIndex = headers.indexOf("Imperfectum");
+  const perfectumIndex = headers.indexOf("Perfectum");
+  const englishIndex = headers.indexOf("English");
 
   if (frontIndex === -1 || backIndex === -1) {
     throw new Error('TSV must include "Front" and "Back" columns.');
@@ -34,6 +45,11 @@ function parseTsv(content) {
       back: cells[backIndex] || "",
       group: groupIndex >= 0 ? cells[groupIndex] || "" : "",
       chapter: chapterIndex >= 0 ? cells[chapterIndex] || "" : "",
+      deckType: deckTypeIndex >= 0 ? cells[deckTypeIndex] || "" : "",
+      infinitief: infinitiefIndex >= 0 ? cells[infinitiefIndex] || "" : "",
+      imperfectum: imperfectumIndex >= 0 ? cells[imperfectumIndex] || "" : "",
+      perfectum: perfectumIndex >= 0 ? cells[perfectumIndex] || "" : "",
+      english: englishIndex >= 0 ? cells[englishIndex] || "" : "",
     };
   });
 }
@@ -353,6 +369,11 @@ function normalizeCards(cards) {
     back: card.back,
     chapter: card.chapter || "",
     group: card.group || "",
+    deckType: card.deckType || "",
+    infinitief: card.infinitief || "",
+    imperfectum: card.imperfectum || "",
+    perfectum: card.perfectum || "",
+    english: card.english || "",
   }));
 }
 
@@ -411,6 +432,7 @@ app.whenReady().then(() => {
 });
 
 ipcMain.handle("deck:load-default", async () => loadDeckFromPath(DEFAULT_DECK_PATH));
+ipcMain.handle("irregular:load-default", async () => loadDeckFromPath(DEFAULT_IRREGULAR_DECK_PATH));
 
 ipcMain.handle("deck:load-from-dialog", async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog({

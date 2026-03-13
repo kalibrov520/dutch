@@ -26,6 +26,10 @@ By default, the app opens:
 
 `Woordenlijst_Dutch_English.docx`
 
+It also ships with an irregular-verbs deck generated from:
+
+`Onregelmatige Werkwoorden Alfabetisch.pdf`
+
 ## Study modes
 
 After loading a file, the title screen lets you start a session:
@@ -36,3 +40,10 @@ After loading a file, the title screen lets you start a session:
 - All words in random order
 
 When a session ends, the app returns to the title screen so you can choose a new approach right away.
+
+## Irregular verbs
+
+The home screen also includes an `Onregelmatige werkwoorden` section with:
+
+- `Learn`: opens the full list with infinitief, imperfectum, perfectum, and English
+- `Check`: quizzes you on 30 random verbs and validates translation, imperfectum, and perfectum answers

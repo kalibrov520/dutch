@@ -82,6 +82,25 @@
             <span class="mode-copy">See every word pair grouped into themes.</span>
           </button>
         </div>
+
+        <div class="home-divider"></div>
+
+        <p class="eyebrow">Onregelmatige werkwoorden</p>
+        <h2>Learn Dutch irregular verbs</h2>
+        <p class="home-copy">
+          Study the infinitief together with the imperfectum, perfectum, and English meaning, or test yourself on 30 random verbs.
+        </p>
+
+        <div class="home-grid browse-grid">
+          <button id="irregular-learn-button" class="mode-card" type="button">
+            <span class="mode-title">Learn</span>
+            <span class="mode-copy">Open the full irregular-verbs list on a separate screen.</span>
+          </button>
+          <button id="irregular-check-button" class="mode-card" type="button">
+            <span class="mode-title">Check</span>
+            <span class="mode-copy">Type the translation, imperfectum, and perfectum for 30 random verbs.</span>
+          </button>
+        </div>
       </section>
 
       <section id="study-view" class="study-view hidden">
@@ -123,6 +142,59 @@
           </div>
         </div>
         <div id="browse-detail-list" class="browse-detail-list"></div>
+      </section>
+
+      <section id="irregular-learn-view" class="browse-view hidden">
+        <div class="browse-header">
+          <div>
+            <p class="eyebrow">Onregelmatige werkwoorden</p>
+            <h2>Learn irregular verbs</h2>
+          </div>
+          <button id="irregular-learn-back-button" class="ghost-button" type="button">Back to home</button>
+        </div>
+        <div id="irregular-learn-list" class="browse-detail-list"></div>
+      </section>
+
+      <section id="irregular-check-view" class="browse-view hidden">
+        <div class="browse-header">
+          <div>
+            <p class="eyebrow">Onregelmatige werkwoorden</p>
+            <h2>Check yourself</h2>
+            <p id="irregular-check-progress" class="status-value">Verb 1 of 30</p>
+          </div>
+          <button id="irregular-check-back-button" class="ghost-button" type="button">Back to home</button>
+        </div>
+
+        <div class="check-card">
+          <p class="card-label">Infinitief</p>
+          <h2 id="irregular-check-prompt" class="card-front"></h2>
+
+          <div class="check-grid">
+            <label class="check-field">
+              <span class="check-label">English translation</span>
+              <input id="irregular-translation-input" class="check-input" type="text" autocomplete="off" />
+              <span id="irregular-translation-hint" class="check-hint"></span>
+            </label>
+
+            <label class="check-field">
+              <span class="check-label">Imperfectum</span>
+              <input id="irregular-imperfectum-input" class="check-input" type="text" autocomplete="off" />
+              <span id="irregular-imperfectum-hint" class="check-hint"></span>
+            </label>
+
+            <label class="check-field">
+              <span class="check-label">Perfectum</span>
+              <input id="irregular-perfectum-input" class="check-input" type="text" autocomplete="off" />
+              <span id="irregular-perfectum-hint" class="check-hint"></span>
+            </label>
+          </div>
+
+          <div class="actions">
+            <button id="irregular-check-submit-button" class="primary-button" type="button">Check answer</button>
+          </div>
+
+          <p id="irregular-check-feedback" class="check-feedback"></p>
+        </div>
       </section>
     </main>
 

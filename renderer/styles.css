@@ -320,6 +320,83 @@ button {
   color: var(--muted);
 }
 
+.irregular-learn-row,
+.check-card {
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.irregular-learn-row {
+  padding: 20px 22px;
+}
+
+.irregular-learn-field {
+  margin: 8px 0 0;
+  color: var(--ink);
+}
+
+.irregular-learn-english {
+  color: var(--accent-dark);
+}
+
+.check-card {
+  margin-top: 18px;
+  padding: 24px;
+}
+
+.check-grid {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.check-field {
+  display: grid;
+  gap: 8px;
+}
+
+.check-label {
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.check-input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: #fffef9;
+  font: inherit;
+  color: var(--ink);
+}
+
+.check-input.invalid {
+  border-color: #c94242;
+  background: #fff1f1;
+}
+
+.check-hint {
+  min-height: 1.2em;
+  font-size: 0.9rem;
+  color: #b23333;
+}
+
+.check-feedback {
+  min-height: 1.4em;
+  margin: 14px 0 0;
+  font-size: 0.98rem;
+}
+
+.check-feedback.success {
+  color: #25673d;
+}
+
+.check-feedback.error {
+  color: #b23333;
+}
+
 .browse-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

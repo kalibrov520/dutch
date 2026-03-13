@@ -1,4 +1,5 @@
 const RANDOM_SESSION_SIZE = 30;
+const IRREGULAR_CHECK_SIZE = 30;
 
 const state = {
   deckPath: "",
@@ -12,6 +13,11 @@ const state = {
   revealed: false,
   selectedMode: "",
   selectedBrowseMode: "",
+  irregularDeckName: "",
+  irregularCards: [],
+  irregularQuizCards: [],
+  irregularQuizIndex: 0,
+  irregularAdvanceTimeout: null,
 };
 
 const elements = {
@@ -19,6 +25,8 @@ const elements = {
   studyView: document.querySelector("#study-view"),
   browseSelectView: document.querySelector("#browse-select-view"),
   browseDetailView: document.querySelector("#browse-detail-view"),
+  irregularLearnView: document.querySelector("#irregular-learn-view"),
+  irregularCheckView: document.querySelector("#irregular-check-view"),
   messagePanel: document.querySelector("#message-panel"),
   deckName: document.querySelector("#deck-name"),
   progressText: document.querySelector("#progress-text"),
@@ -34,7 +42,7 @@ const elements = {
   selectorPanel: document.querySelector("#selector-panel"),
   modeSelectLabel: document.querySelector("#mode-select-label"),
   modeSelect: document.querySelector("#mode-select"),
-  modeCards: [...document.querySelectorAll(".mode-card")],
+  modeCards: [...document.querySelectorAll(".mode-card[data-mode]")],
   browseCards: [...document.querySelectorAll(".browse-card")],
   browseSelectTitle: document.querySelector("#browse-select-title"),
   browseSelectList: document.querySelector("#browse-select-list"),
@@ -43,6 +51,21 @@ const elements = {
   browseDetailList: document.querySelector("#browse-detail-list"),
   browseDetailBackButton: document.querySelector("#browse-detail-back-button"),
   browseDetailHomeButton: document.querySelector("#browse-detail-home-button"),
+  irregularLearnButton: document.querySelector("#irregular-learn-button"),
+  irregularCheckButton: document.querySelector("#irregular-check-button"),
+  irregularLearnBackButton: document.querySelector("#irregular-learn-back-button"),
+  irregularLearnList: document.querySelector("#irregular-learn-list"),
+  irregularCheckBackButton: document.querySelector("#irregular-check-back-button"),
+  irregularPrompt: document.querySelector("#irregular-check-prompt"),
+  irregularCheckProgress: document.querySelector("#irregular-check-progress"),
+  irregularTranslationInput: document.querySelector("#irregular-translation-input"),
+  irregularImperfectumInput: document.querySelector("#irregular-imperfectum-input"),
+  irregularPerfectumInput: document.querySelector("#irregular-perfectum-input"),
+  irregularTranslationHint: document.querySelector("#irregular-translation-hint"),
+  irregularImperfectumHint: document.querySelector("#irregular-imperfectum-hint"),
+  irregularPerfectumHint: document.querySelector("#irregular-perfectum-hint"),
+  irregularCheckFeedback: document.querySelector("#irregular-check-feedback"),
+  irregularCheckSubmitButton: document.querySelector("#irregular-check-submit-button"),
 };
 
 function shuffle(cards) {
@@ -52,6 +75,22 @@ function shuffle(cards) {
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;
+}
+
+function clearIrregularAdvanceTimeout() {
+  if (state.irregularAdvanceTimeout) {
+    window.clearTimeout(state.irregularAdvanceTimeout);
+    state.irregularAdvanceTimeout = null;
+  }
+}
+
+function hideAllViews() {
+  elements.titleView.classList.add("hidden");
+  elements.studyView.classList.add("hidden");
+  elements.browseSelectView.classList.add("hidden");
+  elements.browseDetailView.classList.add("hidden");
+  elements.irregularLearnView.classList.add("hidden");
+  elements.irregularCheckView.classList.add("hidden");
 }
 
 function showMessage(message) {
@@ -129,13 +168,12 @@ function configureMode(mode) {
 }
 
 function renderTitleScreen(message = "") {
+  clearIrregularAdvanceTimeout();
   state.sessionCards = [];
   state.currentIndex = 0;
   state.revealed = false;
 
-  elements.studyView.classList.add("hidden");
-  elements.browseSelectView.classList.add("hidden");
-  elements.browseDetailView.classList.add("hidden");
+  hideAllViews();
   elements.titleView.classList.remove("hidden");
   elements.progressText.textContent = "0 / 0";
 
@@ -159,10 +197,9 @@ function renderCurrentCard() {
     return;
   }
 
+  clearIrregularAdvanceTimeout();
   state.revealed = false;
-  elements.titleView.classList.add("hidden");
-  elements.browseSelectView.classList.add("hidden");
-  elements.browseDetailView.classList.add("hidden");
+  hideAllViews();
   elements.studyView.classList.remove("hidden");
 
   elements.cardLabel.textContent = "Click the card to reveal";
@@ -201,6 +238,11 @@ function setDeck(deck) {
   renderTitleScreen();
 }
 
+function setIrregularDeck(deck) {
+  state.irregularDeckName = deck.deckName;
+  state.irregularCards = deck.cards.filter((card) => card.deckType === "irregular-verbs");
+}
+
 function browseOptionsForMode(mode) {
   if (mode === "chapter") {
     return state.chapters.map((chapter) => ({
@@ -230,10 +272,9 @@ function renderBrowseSelectionView(mode) {
     return;
   }
 
+  clearIrregularAdvanceTimeout();
   state.selectedBrowseMode = mode;
-  elements.titleView.classList.add("hidden");
-  elements.studyView.classList.add("hidden");
-  elements.browseDetailView.classList.add("hidden");
+  hideAllViews();
   elements.browseSelectView.classList.remove("hidden");
   elements.progressText.textContent = "Choose category";
   elements.browseSelectTitle.textContent = mode === "chapter" ? "Choose a hoofdstuk" : "Choose a theme";
@@ -262,8 +303,8 @@ function renderBrowseSelectionView(mode) {
 }
 
 function renderBrowseDetailView(group) {
-  elements.browseSelectView.classList.add("hidden");
-  elements.studyView.classList.add("hidden");
+  clearIrregularAdvanceTimeout();
+  hideAllViews();
   elements.browseDetailView.classList.remove("hidden");
   elements.progressText.textContent = `${group.cards.length} words`;
   elements.browseDetailTitle.textContent = group.name;
@@ -339,12 +380,195 @@ function nextCard() {
   renderCurrentCard();
 }
 
+function renderIrregularLearnView() {
+  if (!state.irregularCards.length) {
+    renderTitleScreen("Irregular verbs are not available yet.");
+    return;
+  }
+
+  clearIrregularAdvanceTimeout();
+  hideAllViews();
+  elements.irregularLearnView.classList.remove("hidden");
+  elements.progressText.textContent = `${state.irregularCards.length} verbs`;
+  hideMessage();
+
+  elements.irregularLearnList.innerHTML = "";
+  for (const card of state.irregularCards) {
+    const row = document.createElement("article");
+    row.className = "irregular-learn-row";
+
+    const infinitief = document.createElement("p");
+    infinitief.className = "browse-front";
+    infinitief.textContent = card.infinitief;
+
+    const imperfectum = document.createElement("p");
+    imperfectum.className = "irregular-learn-field";
+    imperfectum.textContent = `Imperfectum: ${card.imperfectum}`;
+
+    const perfectum = document.createElement("p");
+    perfectum.className = "irregular-learn-field";
+    perfectum.textContent = `Perfectum: ${card.perfectum}`;
+
+    const english = document.createElement("p");
+    english.className = "irregular-learn-field irregular-learn-english";
+    english.textContent = `English: ${card.english}`;
+
+    row.append(infinitief, imperfectum, perfectum, english);
+    elements.irregularLearnList.append(row);
+  }
+}
+
+function normalizeBase(text) {
+  return text
+    .toLowerCase()
+    .replace(/[–-]/g, "-")
+    .replace(/\s+/g, " ")
+    .replace(/\s*,\s*/g, ", ")
+    .replace(/\s*\/\s*/g, " / ")
+    .trim();
+}
+
+function acceptableDutchAnswers(value) {
+  const answers = new Set();
+  const normalized = normalizeBase(value);
+  answers.add(normalized);
+
+  for (const variant of normalized.split(" / ")) {
+    answers.add(variant.trim());
+    if (variant.startsWith("(is) ")) {
+      answers.add(variant.replace("(is) ", "is ").trim());
+      answers.add(variant.replace("(is) ", "").trim());
+    }
+    if (variant.startsWith("is ")) {
+      answers.add(variant.replace("is ", "").trim());
+    }
+  }
+
+  return answers;
+}
+
+function acceptableEnglishAnswers(value) {
+  const answers = new Set();
+  const normalized = normalizeBase(value);
+  answers.add(normalized);
+
+  for (const variant of normalized.split(",")) {
+    const trimmed = variant.trim();
+    if (!trimmed) {
+      continue;
+    }
+    answers.add(trimmed);
+    answers.add(trimmed.replace(/^to /, "").trim());
+  }
+
+  return answers;
+}
+
+function setFieldState(input, hint, isValid, expected) {
+  input.classList.toggle("invalid", !isValid);
+  hint.textContent = isValid ? "" : `Expected: ${expected}`;
+}
+
+function clearCheckFeedback() {
+  elements.irregularCheckFeedback.textContent = "";
+  elements.irregularCheckFeedback.className = "check-feedback";
+  [
+    [elements.irregularTranslationInput, elements.irregularTranslationHint],
+    [elements.irregularImperfectumInput, elements.irregularImperfectumHint],
+    [elements.irregularPerfectumInput, elements.irregularPerfectumHint],
+  ].forEach(([input, hint]) => {
+    input.classList.remove("invalid");
+    hint.textContent = "";
+  });
+}
+
+function currentIrregularQuizCard() {
+  return state.irregularQuizCards[state.irregularQuizIndex];
+}
+
+function renderIrregularCheckCard() {
+  const card = currentIrregularQuizCard();
+  if (!card) {
+    renderTitleScreen("Irregular verbs check complete. Pick your next session when you are ready.");
+    return;
+  }
+
+  clearIrregularAdvanceTimeout();
+  hideAllViews();
+  elements.irregularCheckView.classList.remove("hidden");
+  elements.progressText.textContent = `${state.irregularQuizIndex + 1} / ${state.irregularQuizCards.length}`;
+  elements.irregularCheckProgress.textContent = `Verb ${state.irregularQuizIndex + 1} of ${state.irregularQuizCards.length}`;
+  elements.irregularPrompt.textContent = card.infinitief;
+  elements.irregularTranslationInput.value = "";
+  elements.irregularImperfectumInput.value = "";
+  elements.irregularPerfectumInput.value = "";
+  clearCheckFeedback();
+  hideMessage();
+  elements.irregularTranslationInput.focus();
+}
+
+function startIrregularCheck() {
+  if (!state.irregularCards.length) {
+    renderTitleScreen("Irregular verbs are not available yet.");
+    return;
+  }
+
+  state.irregularQuizCards = shuffle(state.irregularCards).slice(
+    0,
+    Math.min(IRREGULAR_CHECK_SIZE, state.irregularCards.length)
+  );
+  state.irregularQuizIndex = 0;
+  renderIrregularCheckCard();
+}
+
+function submitIrregularCheck() {
+  const card = currentIrregularQuizCard();
+  if (!card) {
+    return;
+  }
+
+  const translationAnswer = normalizeBase(elements.irregularTranslationInput.value);
+  const imperfectumAnswer = normalizeBase(elements.irregularImperfectumInput.value);
+  const perfectumAnswer = normalizeBase(elements.irregularPerfectumInput.value);
+
+  const translationOk = acceptableEnglishAnswers(card.english).has(translationAnswer);
+  const imperfectumOk = acceptableDutchAnswers(card.imperfectum).has(imperfectumAnswer);
+  const perfectumOk = acceptableDutchAnswers(card.perfectum).has(perfectumAnswer);
+
+  setFieldState(elements.irregularTranslationInput, elements.irregularTranslationHint, translationOk, card.english);
+  setFieldState(elements.irregularImperfectumInput, elements.irregularImperfectumHint, imperfectumOk, card.imperfectum);
+  setFieldState(elements.irregularPerfectumInput, elements.irregularPerfectumHint, perfectumOk, card.perfectum);
+
+  if (translationOk && imperfectumOk && perfectumOk) {
+    elements.irregularCheckFeedback.textContent = "Correct. Moving to the next verb...";
+    elements.irregularCheckFeedback.className = "check-feedback success";
+    clearIrregularAdvanceTimeout();
+    state.irregularAdvanceTimeout = window.setTimeout(() => {
+      state.irregularQuizIndex += 1;
+      renderIrregularCheckCard();
+    }, 900);
+    return;
+  }
+
+  elements.irregularCheckFeedback.textContent = "Not quite yet. The highlighted fields still need work.";
+  elements.irregularCheckFeedback.className = "check-feedback error";
+}
+
 async function loadDefaultDeck() {
   try {
     const deck = await window.flashcards.loadDefaultDeck();
     setDeck(deck);
   } catch (error) {
     showMessage(error.message || "Could not load the default deck.");
+  }
+}
+
+async function loadDefaultIrregularDeck() {
+  try {
+    const deck = await window.flashcards.loadDefaultIrregularDeck();
+    setIrregularDeck(deck);
+  } catch (error) {
+    showMessage(error.message || "Could not load the irregular verbs deck.");
   }
 }
 
@@ -374,22 +598,31 @@ elements.browseCards.forEach((browseCard) => {
 elements.browseSelectBackHomeButton.addEventListener("click", () => renderTitleScreen());
 elements.browseDetailBackButton.addEventListener("click", () => renderBrowseSelectionView(state.selectedBrowseMode));
 elements.browseDetailHomeButton.addEventListener("click", () => renderTitleScreen());
+elements.irregularLearnButton.addEventListener("click", renderIrregularLearnView);
+elements.irregularCheckButton.addEventListener("click", startIrregularCheck);
+elements.irregularLearnBackButton.addEventListener("click", () => renderTitleScreen());
+elements.irregularCheckBackButton.addEventListener("click", () => renderTitleScreen());
+elements.irregularCheckSubmitButton.addEventListener("click", submitIrregularCheck);
 
 window.addEventListener("keydown", (event) => {
   if (event.key !== " " && event.key !== "Enter") {
     return;
   }
 
-  if (!state.sessionCards.length || elements.studyView.classList.contains("hidden")) {
+  if (!elements.studyView.classList.contains("hidden")) {
+    event.preventDefault();
+    if (state.revealed) {
+      nextCard();
+    } else {
+      revealCurrentCard();
+    }
     return;
   }
 
-  event.preventDefault();
-  if (state.revealed) {
-    nextCard();
-  } else {
-    revealCurrentCard();
+  if (!elements.irregularCheckView.classList.contains("hidden") && event.key === "Enter") {
+    event.preventDefault();
+    submitIrregularCheck();
   }
 });
 
-loadDefaultDeck();
+Promise.all([loadDefaultDeck(), loadDefaultIrregularDeck()]);
