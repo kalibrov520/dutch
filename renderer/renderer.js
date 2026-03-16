@@ -212,6 +212,23 @@ function configureMode(mode) {
     return;
   }
 
+  if (mode === "starred") {
+    const starredCards = state.allCards.filter((card) => state.starredWords.has(cardId(card)));
+    if (!starredCards.length) {
+      showMessage("You haven't starred any words yet. Star words during a session or from the browse list.");
+      hideSelector();
+      return;
+    }
+    hideMessage();
+    const starredChapters = [...new Set(starredCards.map((c) => c.chapter).filter(Boolean))];
+    if (starredChapters.length) {
+      showSelector("Filter by hoofdstuk", ["All starred words", ...starredChapters]);
+    } else {
+      hideSelector();
+    }
+    return;
+  }
+
   hideMessage();
   hideSelector();
 }
@@ -412,6 +429,15 @@ function buildSessionCards() {
 
   if (state.selectedMode === "random30") {
     return shuffle(state.allCards).slice(0, Math.min(RANDOM_SESSION_SIZE, state.allCards.length));
+  }
+
+  if (state.selectedMode === "starred") {
+    const allStarred = state.allCards.filter((card) => state.starredWords.has(cardId(card)));
+    const selection = elements.modeSelect.value;
+    if (selection && selection !== "All starred words") {
+      return shuffle(allStarred.filter((card) => card.chapter === selection));
+    }
+    return shuffle(allStarred);
   }
 
   return shuffle(state.allCards);

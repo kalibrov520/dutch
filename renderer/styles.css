@@ -135,6 +135,10 @@ body {
   transform: translateY(-2px);
 }
 
+.mode-card-wide {
+  grid-column: 1 / -1;
+}
+
 .mode-card.selected {
   border-color: rgba(185, 92, 52, 0.7);
   background: #fff1e7;
