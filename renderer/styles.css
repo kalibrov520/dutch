@@ -68,6 +68,12 @@ body {
   margin-top: 22px;
 }
 
+.study-nav {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
 .home-view {
   padding: 28px;
 }

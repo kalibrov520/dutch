@@ -73,6 +73,7 @@ const elements = {
   irregularPerfectumHint: document.querySelector("#irregular-perfectum-hint"),
   irregularCheckFeedback: document.querySelector("#irregular-check-feedback"),
   irregularCheckSubmitButton: document.querySelector("#irregular-check-submit-button"),
+  studyBackHomeButton: document.querySelector("#study-back-home-button"),
 };
 
 function shuffle(cards) {
@@ -674,6 +675,7 @@ elements.irregularFilterInput.addEventListener("input", (event) => updateIrregul
 elements.irregularPrevPageButton.addEventListener("click", goToPreviousIrregularPage);
 elements.irregularNextPageButton.addEventListener("click", goToNextIrregularPage);
 elements.irregularCheckBackButton.addEventListener("click", () => renderTitleScreen());
+elements.studyBackHomeButton.addEventListener("click", () => renderTitleScreen());
 elements.irregularCheckSubmitButton.addEventListener("click", submitIrregularCheck);
 
 window.addEventListener("keydown", (event) => {
