@@ -39,6 +39,7 @@ const elements = {
   cardLabel: document.querySelector("#card-label"),
   cardFront: document.querySelector("#card-front"),
   cardBack: document.querySelector("#card-back"),
+  cardSentence: document.querySelector("#card-sentence"),
   cardMeta: document.querySelector("#card-meta"),
   revealButton: document.querySelector("#reveal-button"),
   nextButton: document.querySelector("#next-button"),
@@ -272,6 +273,8 @@ function renderCurrentCard() {
   elements.cardFront.textContent = card.front;
   elements.cardBack.textContent = card.back;
   elements.cardBack.classList.add("hidden");
+  elements.cardSentence.textContent = "";
+  elements.cardSentence.classList.add("hidden");
   elements.cardMeta.textContent = [card.group, card.chapter].filter(Boolean).join("  •  ");
   elements.revealButton.classList.remove("hidden");
   elements.nextButton.classList.add("hidden");
@@ -287,6 +290,11 @@ function revealCurrentCard() {
   state.revealed = true;
   elements.cardLabel.textContent = "Definition";
   elements.cardBack.classList.remove("hidden");
+  const sentence = (window.SENTENCES || {})[currentCard()?.front];
+  if (sentence) {
+    elements.cardSentence.textContent = sentence;
+    elements.cardSentence.classList.remove("hidden");
+  }
   elements.revealButton.classList.add("hidden");
   elements.nextButton.classList.remove("hidden");
 }
@@ -412,6 +420,14 @@ function renderBrowseDetailView(group) {
     });
 
     row.append(front, back, starBtn);
+
+    const sentence = (window.SENTENCES || {})[card.front];
+    if (sentence) {
+      const sentenceEl = document.createElement("p");
+      sentenceEl.className = "browse-sentence";
+      sentenceEl.textContent = sentence;
+      row.append(sentenceEl);
+    }
     elements.browseDetailList.append(row);
   }
 }
