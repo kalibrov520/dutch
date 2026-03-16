@@ -21,6 +21,8 @@ const state = {
   irregularQuizCards: [],
   irregularQuizIndex: 0,
   irregularAdvanceTimeout: null,
+  starredWords: new Set(),
+  currentBrowseGroup: null,
 };
 
 const elements = {
@@ -74,6 +76,7 @@ const elements = {
   irregularCheckFeedback: document.querySelector("#irregular-check-feedback"),
   irregularCheckSubmitButton: document.querySelector("#irregular-check-submit-button"),
   studyBackHomeButton: document.querySelector("#study-back-home-button"),
+  studyStarButton: document.querySelector("#star-button"),
 };
 
 function shuffle(cards) {
@@ -83,6 +86,44 @@ function shuffle(cards) {
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;
+}
+
+function cardId(card) {
+  return `${card.front}|${card.back}`;
+}
+
+function loadStarredWords() {
+  try {
+    const stored = localStorage.getItem("dutch-flashcards-starred");
+    if (stored) {
+      state.starredWords = new Set(JSON.parse(stored));
+    }
+  } catch {
+    state.starredWords = new Set();
+  }
+}
+
+function saveStarredWords() {
+  localStorage.setItem("dutch-flashcards-starred", JSON.stringify([...state.starredWords]));
+}
+
+function toggleCardStar(card) {
+  const id = cardId(card);
+  if (state.starredWords.has(id)) {
+    state.starredWords.delete(id);
+  } else {
+    state.starredWords.add(id);
+  }
+  saveStarredWords();
+}
+
+function updateStarButtonState() {
+  const card = currentCard();
+  if (!card) return;
+  const starred = state.starredWords.has(cardId(card));
+  elements.studyStarButton.textContent = starred ? "★" : "☆";
+  elements.studyStarButton.setAttribute("aria-label", starred ? "Unstar this word" : "Star this word");
+  elements.studyStarButton.classList.toggle("starred", starred);
 }
 
 function clearIrregularAdvanceTimeout() {
@@ -218,6 +259,7 @@ function renderCurrentCard() {
   elements.revealButton.classList.remove("hidden");
   elements.nextButton.classList.add("hidden");
   updateProgress();
+  updateStarButtonState();
 }
 
 function revealCurrentCard() {
@@ -313,6 +355,7 @@ function renderBrowseSelectionView(mode) {
 }
 
 function renderBrowseDetailView(group) {
+  state.currentBrowseGroup = group;
   clearIrregularAdvanceTimeout();
   hideAllViews();
   elements.browseDetailView.classList.remove("hidden");
@@ -320,10 +363,18 @@ function renderBrowseDetailView(group) {
   elements.browseDetailTitle.textContent = group.name;
   hideMessage();
 
+  const sortedCards = [...group.cards].sort((a, b) => {
+    const aStarred = state.starredWords.has(cardId(a));
+    const bStarred = state.starredWords.has(cardId(b));
+    if (aStarred === bStarred) return 0;
+    return aStarred ? -1 : 1;
+  });
+
   elements.browseDetailList.innerHTML = "";
-  for (const card of group.cards) {
+  for (const card of sortedCards) {
+    const starred = state.starredWords.has(cardId(card));
     const row = document.createElement("article");
-    row.className = "browse-row";
+    row.className = starred ? "browse-row starred" : "browse-row";
 
     const front = document.createElement("p");
     front.className = "browse-front";
@@ -333,7 +384,17 @@ function renderBrowseDetailView(group) {
     back.className = "browse-back";
     back.textContent = card.back;
 
-    row.append(front, back);
+    const starBtn = document.createElement("button");
+    starBtn.type = "button";
+    starBtn.className = starred ? "star-button browse-star-button starred" : "star-button browse-star-button";
+    starBtn.textContent = starred ? "★" : "☆";
+    starBtn.setAttribute("aria-label", starred ? "Unstar this word" : "Star this word");
+    starBtn.addEventListener("click", () => {
+      toggleCardStar(card);
+      renderBrowseDetailView(group);
+    });
+
+    row.append(front, back, starBtn);
     elements.browseDetailList.append(row);
   }
 }
@@ -676,6 +737,12 @@ elements.irregularPrevPageButton.addEventListener("click", goToPreviousIrregular
 elements.irregularNextPageButton.addEventListener("click", goToNextIrregularPage);
 elements.irregularCheckBackButton.addEventListener("click", () => renderTitleScreen());
 elements.studyBackHomeButton.addEventListener("click", () => renderTitleScreen());
+elements.studyStarButton.addEventListener("click", () => {
+  const card = currentCard();
+  if (!card) return;
+  toggleCardStar(card);
+  updateStarButtonState();
+});
 elements.irregularCheckSubmitButton.addEventListener("click", submitIrregularCheck);
 
 window.addEventListener("keydown", (event) => {
@@ -699,4 +766,5 @@ window.addEventListener("keydown", (event) => {
   }
 });
 
+loadStarredWords();
 Promise.all([loadDefaultDeck(), loadDefaultIrregularDeck()]);
